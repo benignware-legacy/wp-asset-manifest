@@ -6,7 +6,7 @@ wp-asset-manifest
 
 To make wordpress aware of your precompiled assets, include the script into your theme: 
 ```php
-require_once("wp-asset-manifest.php");
+require_once("wp_asset_manifest.php");
 ```
 
 Place a file named `manifest.json` or `assets.json` in your template directory which contains your asset mappings.
