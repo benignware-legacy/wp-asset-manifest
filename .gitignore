@@ -1,0 +1,6 @@
+# Eclipse
+.project
+.settings
+
+# GFM preview
+.README.md.html
