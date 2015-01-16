@@ -45,6 +45,6 @@ asset_path('image.png');
 By default the script will scan your template directory recursively for a file matching `{manifest,assets}.json`.
 You can customize the glob pattern by the use of a constant:
 ```php
-define('WP_ASSET_MANIFEST', '{manifest,assets}.json');
+define('WP_ASSET_MANIFEST', '**/{manifest,assets}.json');
 ``` 
 
