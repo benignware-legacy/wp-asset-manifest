@@ -16,6 +16,7 @@
 if (!function_exists('brglob')) {
   
   function brglob($pattern, $flags = 0) {
+    
     // brace support
     $matches = array();
     $bpatterns = array("");
@@ -40,6 +41,7 @@ if (!function_exists('brglob')) {
       $bpatterns = $s;
       
     }
+    
     $patterns = array();
     // 
     foreach($bpatterns as $pattern) {
@@ -51,7 +53,7 @@ if (!function_exists('brglob')) {
         $start_str = substr($pattern, $end_index, $index - $end_index);
         $end_index = $index + strlen($match[0]) + 1;
         $end_str = substr($pattern, $end_index);
-        $rootpath = '.' . DIRECTORY_SEPARATOR . $start_str;
+        $rootpath = $start_str;
         if (!is_dir($rootpath)) {
           continue; 
         }
@@ -63,10 +65,10 @@ if (!function_exists('brglob')) {
         $max_depth = 0;
         $as_dirs = array();
         foreach($fileinfos as $pathname => $fileinfo) {
-            if ($fileinfo->isDir() && basename($pathname) === ".") {
-              $count = substr_count(dirname($pathname), DIRECTORY_SEPARATOR) - $depth;
-              $max_depth = max($count, $max_depth);
-            }
+          if ($fileinfo->isDir() && basename($pathname) === ".") {
+            $count = substr_count(dirname($pathname), DIRECTORY_SEPARATOR) - $depth;
+            $max_depth = max($count, $max_depth);
+          }
         }
         $p = "";
         for ($i = 0; $i < $max_depth; $i++) {
@@ -115,24 +117,24 @@ if (function_exists('brglob') && !function_exists('asset_path')) {
     $assetPath = join('/', array($base_uri, trim($logical_path, '/')));
 
     // Find manifest file
-    $manifest = "";
+    // Iterate directories recursively
+    $pattern = rtrim($base_dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $options['manifest'];
     
-    // Iterate directories recursively 
-    echo $options['manifest'];
-    $files = brglob($options['manifest']);
-    print_r($files);
-    if (!$manifest || !file_exists($manifest)) {
+    $files = brglob($pattern);
+    
+    if (!count($files)) {
       // Manifest not found
       return $assetPath;
     }
     
+    $manifest = $files[0];
     // Manifest found
     
     // Get relative manifest dir
     if (substr($manifest, 0, strlen($base_dir)) == $base_dir) {
       $manifest_dir = dirname(ltrim(substr($manifest, strlen($base_dir)), "/"));
     }
-    
+
     // Read file
     $json = json_decode(file_get_contents($manifest), TRUE);
     
