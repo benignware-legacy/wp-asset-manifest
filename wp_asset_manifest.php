@@ -9,17 +9,102 @@
 //define('WP_ASSET_MANIFEST', '{manifest,assets}.json');
 
 
+/** 
+ * Find files recursively by using glob pattern
+ */
+
+if (!function_exists('brglob')) {
+  
+  function brglob($pattern, $flags = 0) {
+    // brace support
+    $matches = array();
+    $bpatterns = array("");
+    preg_match_all("/\{([^\}]*)\}/", $pattern, $matches, PREG_OFFSET_CAPTURE);
+    $end_index = 0;
+    foreach($matches[1] as $i => $match) {
+      $index = $match[1];
+      $values = explode(",", $match[0]);
+      $start_str = substr($pattern, $end_index, $index - 1 - $end_index);
+      $end_index = $index + strlen($match[0]) + 1;
+      if ($i == count($matches[1]) - 1) {
+        $end_str = substr($pattern, $end_index);
+      } else {
+        $end_str = "";
+      }
+      $s = array();
+      foreach ($values as $value) {
+        foreach ($bpatterns as $part) {
+          array_push($s, $part . $start_str . $value . $end_str);
+        }
+      }
+      $bpatterns = $s;
+      
+    }
+    $patterns = array();
+    // 
+    foreach($bpatterns as $pattern) {
+      $end_index = 0;
+      $rpatterns = array("");
+      preg_match_all("/(?:^|\/)(\*\*)/", $pattern, $matches, PREG_OFFSET_CAPTURE);
+      foreach($matches[1] as $match) {
+        $index = $match[1];
+        $start_str = substr($pattern, $end_index, $index - $end_index);
+        $end_index = $index + strlen($match[0]) + 1;
+        $end_str = substr($pattern, $end_index);
+        $rootpath = '.' . DIRECTORY_SEPARATOR . $start_str;
+        if (!is_dir($rootpath)) {
+          continue; 
+        }
+        $fileinfos = new RecursiveIteratorIterator(
+          new RecursiveDirectoryIterator($rootpath)
+        );
+        $s = array();
+        $depth = substr_count(dirname($start_str), DIRECTORY_SEPARATOR);
+        $max_depth = 0;
+        $as_dirs = array();
+        foreach($fileinfos as $pathname => $fileinfo) {
+            if ($fileinfo->isDir() && basename($pathname) === ".") {
+              $count = substr_count(dirname($pathname), DIRECTORY_SEPARATOR) - $depth;
+              $max_depth = max($count, $max_depth);
+            }
+        }
+        $p = "";
+        for ($i = 0; $i < $max_depth; $i++) {
+          $p.=  "*" . DIRECTORY_SEPARATOR;
+          foreach ($rpatterns as $part) {
+            array_push($s, $part . $start_str . $p . $end_str);
+          }
+        }
+        $rpatterns = $s;
+      } 
+      $patterns = array_merge($patterns, $rpatterns);
+    }
+    //return;
+    $result = array();
+    foreach ($patterns as $pattern) {
+      $result = array_merge($result, glob($pattern, $flags));
+    }
+    return $result;
+  }
+}
+
+
 /**
  * Asset path helper
  */
-if (!function_exists('asset_path')) {
+if (function_exists('brglob') && !function_exists('asset_path')) {
   
   function asset_path($logical_path, $options = array()) {
     // Merge options with defaults
+    if (function_exists('get_template_directory_uri')) {
+      
+    }
+    $base_uri = function_exists('get_template_directory_uri') ? get_template_directory_uri() : "";
+    $base_dir = function_exists('get_template_directory') ? get_template_directory() : "";
     $options = array_merge(array(
-      'base_uri' => get_template_directory_uri(),
-      'base_dir' => get_template_directory(),
-      'manifest' => defined("WP_ASSET_MANIFEST") ? WP_ASSET_MANIFEST : '{manifest,assets}.json'
+      'base_uri' => $base_uri,
+      'base_dir' => $base_dir,
+      'manifest' => defined("WP_ASSET_MANIFEST") ? WP_ASSET_MANIFEST : '**/{manifest,assets}.json'
     ), $options);
     
     // Setup directory root
@@ -33,20 +118,9 @@ if (!function_exists('asset_path')) {
     $manifest = "";
     
     // Iterate directories recursively 
-    $dir_iterator = new RecursiveDirectoryIterator($base_dir);
-    $iterator = new RecursiveIteratorIterator($dir_iterator, RecursiveIteratorIterator::SELF_FIRST);
-    foreach ($iterator as $file) {
-      if (is_dir($file) === true && (realpath($file) === $base_dir || basename($file) !== ".") && basename($file) !== "..") {
-        // Glob
-        $pattern = join('/', array(rtrim($file, "/"), rtrim($options['manifest'], "/")));
-        $files = glob($pattern, GLOB_BRACE);
-        if (count($files)) {
-          $manifest = $files[0];
-          break;
-        }
-      }
-    }
-    
+    echo $options['manifest'];
+    $files = brglob($options['manifest']);
+    print_r($files);
     if (!$manifest || !file_exists($manifest)) {
       // Manifest not found
       return $assetPath;
@@ -61,6 +135,7 @@ if (!function_exists('asset_path')) {
     
     // Read file
     $json = json_decode(file_get_contents($manifest), TRUE);
+    
     if ($json) {
       if (isset($json['assets'])) {
         $assets = $json['assets'];
@@ -103,10 +178,11 @@ if (!function_exists('wpam_setup_asset_paths')) {
     }
   }
   
-  // Add action hooks
-  add_action('wp_print_scripts', 'wpam_setup_asset_paths');
-  add_action('wp_print_styles', 'wpam_setup_asset_paths');
-  
+  if (function_exists('add_action')) {
+    // Add action hooks
+    add_action('wp_print_scripts', 'wpam_setup_asset_paths');
+    add_action('wp_print_styles', 'wpam_setup_asset_paths');
+  }
 }
 
 ?>
