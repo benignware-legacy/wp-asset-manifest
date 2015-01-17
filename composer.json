@@ -1,0 +1,24 @@
+{
+  "name": "wp-asset-manifest",
+  "type": "wordpress-muplugin",
+  "license": "MIT",
+  "description": "Access assets via manifest",
+  "homepage": "http://benignware.com",
+  "authors": [
+    {
+      "name": "Rafael Nowrotek",
+      "email": "mail@benignware.com",
+      "homepage": "https://github.com/benignware"
+    }
+  ],
+  "keywords": [
+    "wordpress", "wordpress-muplugin"
+  ],
+  "support": {
+    "issues": "https://github.com/benignware/wp-asset-manifest/issues"
+  },
+  "require": {
+    "php": ">=5.3.0",
+    "composer/installers": "~1.0"
+  }
+}
