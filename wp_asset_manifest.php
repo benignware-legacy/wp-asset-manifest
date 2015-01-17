@@ -1,10 +1,14 @@
 <?php
 /**
- * wp-asset-manifest
- * Access assets via manifest
- * 
- */
- 
+ Plugin Name: Asset manifest
+ Plugin URI: http://github.com/benignware/wp-asset-manifest
+ Description: Access assets via manifest
+ Version: 0.0.1
+ Author: Rafael Nowrotek, Benignware
+ Author URI: http://benignware.com
+ License: MIT
+*/
+
 // Defines a glob pattern which is used to scan recursively for manifest file
 //define('WP_ASSET_MANIFEST', '{manifest,assets}.json');
 
