@@ -9,4 +9,4 @@
  License: MIT
 */
 
-require_once 'wp_asset_manifest';
+require_once 'wp_asset_manifest.php';
